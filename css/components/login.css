@@ -80,7 +80,6 @@
 
 .form-input:focus {
   border-color: var(--secondary);
-  box-shadow: var(--shadow-glow);
 }
 
 .form-input::placeholder {
