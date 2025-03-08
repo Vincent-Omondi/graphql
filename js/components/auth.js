@@ -162,33 +162,52 @@ export function getAuthHeaders() {
  * @param {HTMLElement} container - The container to render the login component into
  */
 export function renderLoginComponent(container) {
-  // Create login component HTML
   const loginHTML = `
-    <div class="login-container">
-      <a href="/" class="back-to-home">
-        <i class="fas fa-arrow-left"></i> Back to Home
+    <div class="login-container glow-container">
+      <a href="/" class="back-to-home hover-scale">
+        <i class="fas fa-arrow-left"></i> Back
       </a>
       
-      <div class="login-card">
+      <div class="login-card glass-card">
         <div class="login-header">
-          <h1 class="login-title">Welcome Back</h1>
-          <p class="login-subtitle">Sign in to access your school profile</p>
+          <h1 class="login-title gradient-text">Welcome Back</h1>
+          <p class="login-subtitle">Sign in to continue</p>
         </div>
         
         <form id="login-form" class="login-form">
           <div class="form-group">
             <label for="username" class="form-label">Username or Email</label>
-            <input type="text" id="username" class="form-input" placeholder="Enter your username or email" required>
+            <input 
+              type="text" 
+              id="username" 
+              class="form-input" 
+              placeholder="Enter your username or email" 
+              required
+            >
             <div id="username-error" class="error-message hidden"></div>
           </div>
           
           <div class="form-group">
             <label for="password" class="form-label">Password</label>
-            <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+            <input 
+              type="password" 
+              id="password" 
+              class="form-input" 
+              placeholder="Enter your password" 
+              required
+            >
+            <button 
+              type="button"
+              class="password-toggle"
+              id="password-toggle"
+              aria-label="Toggle password visibility"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
             <div id="password-error" class="error-message hidden"></div>
           </div>
           
-          <button type="submit" id="login-button" class="login-btn">
+          <button type="submit" id="login-button" class="login-btn hover-glow">
             <span id="login-spinner" class="loading-spinner hidden"></span>
             <span id="login-text">Sign In</span>
           </button>
@@ -199,16 +218,13 @@ export function renderLoginComponent(container) {
         <div class="login-divider">or</div>
         
         <div class="text-center">
-          <p>Need access? Contact your administrator</p>
+          <p class="gradient-text">Need access? Contact your administrator</p>
         </div>
       </div>
     </div>
   `;
   
-  // Render the component
   container.innerHTML = loginHTML;
-  
-  // Set up event listeners
   setupLoginEvents();
 }
 
@@ -219,6 +235,7 @@ function setupLoginEvents() {
   const loginForm = document.getElementById('login-form');
   const usernameInput = document.getElementById('username');
   const passwordInput = document.getElementById('password');
+  const passwordToggle = document.getElementById('password-toggle');
   const usernameError = document.getElementById('username-error');
   const passwordError = document.getElementById('password-error');
   const authError = document.getElementById('auth-error');
@@ -226,6 +243,15 @@ function setupLoginEvents() {
   const loginSpinner = document.getElementById('login-spinner');
   const loginText = document.getElementById('login-text');
   
+  // Password toggle functionality
+  passwordToggle.addEventListener('click', () => {
+    const type = passwordInput.type === 'password' ? 'text' : 'password';
+    passwordInput.type = type;
+    passwordToggle.innerHTML = type === 'password' 
+      ? '<i class="fas fa-eye"></i>' 
+      : '<i class="fas fa-eye-slash"></i>';
+  });
+
   // Form submission
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
