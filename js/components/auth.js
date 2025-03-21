@@ -5,7 +5,7 @@
 // =============================================
 
 const AUTH_TOKEN_KEY = 'auth_token';
-const API_URL = 'https://yourdomain.com/api'; // Replace with your actual API URL
+const API_URL = 'https://learn.zone01kisumu.ke/api/auth/signin';
 
 /**
  * Login with username/email and password
@@ -21,7 +21,7 @@ export async function login(credentials) {
     const authValue = btoa(`${credentials.username}:${credentials.password}`);
     
     // Make POST request to signin endpoint
-    const response = await fetch(`${API_URL}/auth/signin`, {
+    const response = await fetch(`${API_URL}`, {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${authValue}`,
@@ -46,8 +46,20 @@ export async function login(credentials) {
     }
     
     // Parse response to get JWT
-    const data = await response.json();
-    const token = data.token || data.jwt || data.access_token;
+    let data;
+    try {
+      data = await response.json();
+      console.log('Sever response JSON:', data);
+    } catch (e) {
+      data = await response.text();
+      console.log('Server response text:', data);
+    }
+    let token;
+    if (typeof data === 'string' && data.split('.').length === 3) {
+      token = data;
+    } else if (typeof data === 'object') {
+      token = data.token || data.jwt || data.access_token;
+    }
     
     if (!token) {
       throw new Error('No token received from server');
