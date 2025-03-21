@@ -4,6 +4,7 @@ import {
     isAuthenticated, 
     logout 
   } from './components/auth.js';
+import { renderProfileComponent } from './components/profile.js';
 
 // Simple router
 const routes = {
@@ -87,15 +88,8 @@ function handleRoute(path) {
       if (!state.isAuthenticated) {
         navigateTo('/login');
       } else {
-        appContainer.innerHTML = `
-          <div class="container text-center mt-4">
-            <h1>Welcome!</h1>
-            <button id="logout-btn" class="btn">Logout</button>
-          </div>
-        `;
-        document.getElementById('logout-btn').addEventListener('click', () => {
-          document.dispatchEvent(new Event('logout'));
-        });
+        // Render the profile component when authenticated
+        renderProfileComponent(appContainer, state.user);
       }
       break;
     case 'login':
