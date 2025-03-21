@@ -211,25 +211,74 @@ function renderProfile(container) {
     className: 'profile-header'
   }, [
     createElement('div', {
+      className: 'user-info'
+    }, [
+      createElement('div', {
+        className: 'user-dropdown'
+      }, [
+        createElement('h1', {
+          className: 'gradient-text user-dropdown-toggle',
+          textContent: state.user?.login || 'User',
+          onclick: (e) => {
+            e.stopPropagation();
+            const dropdown = e.target.closest('.user-dropdown').querySelector('.dropdown-menu');
+            dropdown.classList.toggle('active');
+            
+            // If opening the dropdown, add document click listener to close it when clicking outside
+            if (dropdown.classList.contains('active')) {
+              // Use setTimeout to prevent immediate closing
+              setTimeout(() => {
+                const closeDropdown = (event) => {
+                  if (!e.target.closest('.user-dropdown').contains(event.target)) {
+                    dropdown.classList.remove('active');
+                    document.removeEventListener('click', closeDropdown);
+                  }
+                };
+                document.addEventListener('click', closeDropdown);
+              }, 10);
+            }
+          }
+        }),
+        createElement('div', {
+          className: 'dropdown-menu'
+        }, [
+          createElement('div', {
+            className: 'dropdown-header'
+          }, [
+            createElement('h3', {
+              textContent: getFullName(state.user)
+            })
+          ]),
+          createElement('div', {
+            className: 'dropdown-body'
+          }, [
+            createElement('div', {
+              className: 'dropdown-item'
+            }, [
+              createElement('span', {
+                className: 'dropdown-label',
+                textContent: 'ID:'
+              }),
+              createElement('span', {
+                className: 'dropdown-value',
+                textContent: state.user?.id || 'Unknown'
+              })
+            ]),
+            ...createUserDetailItems(state.user)
+          ])
+        ])
+      ])
+    ]),
+    createElement('div', {
       className: 'logout-button'
     }, [
       createElement('button', {
-        className: 'button',
-        innerHTML: '<i class="fas fa-sign-out-alt"></i> Logout',
+        className: 'power-button',
+        innerHTML: '<i class="fas fa-power-off"></i>',
+        title: 'Logout',
         onclick: () => {
           document.dispatchEvent(new Event('logout'));
         }
-      })
-    ]),
-    createElement('div', {
-      className: 'user-info'
-    }, [
-      createElement('h1', {
-        className: 'gradient-text',
-        textContent: state.user?.login || 'User'
-      }),
-      createElement('p', {
-        textContent: `ID: ${state.user?.id || 'Unknown'}`
       })
     ])
   ]);
@@ -573,6 +622,42 @@ function renderProfile(container) {
       });
     }
   }, 100); // Small delay to ensure DOM is ready
+}
+
+// Helper function to get full name
+function getFullName(user) {
+  if (!user) return 'User Profile';
+  return `${user.firstName || ''} ${user.attrs?.middleName || ''} ${user.lastName || ''}`.trim();
+}
+
+// Helper function to create user detail items
+function createUserDetailItems(user) {
+  if (!user || !user.attrs) return [];
+  
+  const details = [
+    { label: 'Email', value: user.attrs.email },
+    { label: 'Phone', value: user.attrs.phone },
+    { label: 'Country', value: user.attrs.country },
+    { label: 'Gender', value: user.attrs.gender },
+    { label: 'Birth Date', value: user.attrs.dateOfBirth ? formatDate(user.attrs.dateOfBirth) : null }
+  ];
+  
+  return details
+    .filter(detail => detail.value)
+    .map(detail => 
+      createElement('div', {
+        className: 'dropdown-item'
+      }, [
+        createElement('span', {
+          className: 'dropdown-label',
+          textContent: `${detail.label}:`
+        }),
+        createElement('span', {
+          className: 'dropdown-value',
+          textContent: detail.value || 'Not available'
+        })
+      ])
+    );
 }
 
 // Export component
