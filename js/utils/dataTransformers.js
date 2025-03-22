@@ -208,41 +208,65 @@ export function transformSkillsData(transactions) {
  * @returns {Object} Processed audit data
  */
 export function transformAuditData(auditData) {
-  if (!auditData || (!auditData.done && !auditData.received)) {
+  // Debug logging to see what we're working with
+  console.log("Transform Audit Data - Input:", {
+    auditData: auditData,
+    auditsDone: auditData?.auditsDone,
+    auditsReceived: auditData?.auditsReceived
+  });
+  
+  if (!auditData || (!auditData.auditsDone && !auditData.auditsReceived)) {
     return {
       done: 0,
       received: 0,
+      doneAmount: 0,
+      receivedAmount: 0,
       ratio: 1,
-      upToDate: true
+      upToDate: true,
+      history: []
     };
   }
   
-  const done = auditData.done?.length || 0;
-  const received = auditData.received?.length || 0;
+  // Get the correct audit records
+  const auditsDone = auditData.auditsDone || [];
+  const auditsReceived = auditData.auditsReceived || [];
   
-  // Calculate audit ratio and status
-  const ratioStats = calculateAuditRatio(done, received);
+  // Calculate counts
+  const done = auditsDone.length;
+  const received = auditsReceived.length;
+  
+  // Log the data being passed to calculateAuditRatio
+  console.log("Data for calculating audit ratio:", {
+    auditsDone: auditsDone,
+    auditsReceived: auditsReceived,
+    doneCount: done,
+    receivedCount: received
+  });
+  
+  // Calculate audit ratio and status based on arrays of transactions
+  const ratioStats = calculateAuditRatio(auditsDone, auditsReceived);
+  
+  console.log("Calculated ratio stats:", ratioStats);
   
   // Get detailed audit statistics
-  const details = analyzeAuditDetails(auditData.done || [], auditData.received || []);
+  const details = analyzeAuditDetails(auditsDone, auditsReceived);
   
   // Get audit history trend
-  const history = getAuditHistoryTrend(auditData.done || [], auditData.received || []);
+  const history = getAuditHistoryTrend(auditsDone, auditsReceived);
   
-  return {
+  const result = {
     done,
     received,
+    doneAmount: ratioStats.doneAmount || 0,
+    receivedAmount: ratioStats.receivedAmount || 0,
     ratio: ratioStats.ratio,
     upToDate: ratioStats.upToDate,
     needsAudits: ratioStats.needsAudits,
     details,
     history
   };
+  
+  console.log("Transform Audit Data - Result:", result);
+  
+  return result;
 }
-
-export default {
-  transformXpData,
-  transformProjectResults,
-  transformSkillsData,
-  transformAuditData
-}; 
