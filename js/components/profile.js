@@ -68,6 +68,11 @@ const QUERIES = {
   
   results: `{
     result(
+      where: {
+        object: {
+          type: {_eq: "project"}
+        }
+      },
       order_by: {createdAt: asc}
     ) {
       id
