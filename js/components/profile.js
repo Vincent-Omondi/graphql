@@ -30,22 +30,34 @@ const QUERIES = {
       login
       firstName
       lastName
+      campus
       attrs
       auditRatio
+      skills: transactions(
+        where: { type: { _like: "skill_%" } },
+        order_by: [{ amount: desc }]
+      ) {
+        type
+        amount
+      }
     }
   }`,
   
   xp: `{
     transaction(
       where: {
-        type: {_eq: "xp"}
+        _and: [
+          { type: {_eq: "xp"} },
+          { eventId: {_eq: 75} }
+        ]
       },
-      order_by: {createdAt: asc}
+      order_by: {createdAt: desc}
     ) {
       id
       amount
       createdAt
       objectId
+      path
       object {
         id
         name
@@ -62,6 +74,7 @@ const QUERIES = {
       grade
       createdAt
       objectId
+      path
       object {
         id
         name
@@ -71,54 +84,82 @@ const QUERIES = {
   }`,
   
   audits: `{
-    audits: transaction(
+    auditsDone: transaction(
       where: {
-        type: {_eq: "up"}
-      }
+        type: {_eq: "up"},
+        object: {
+          type: {_eq: "project"}
+        }
+      },
+      order_by: {createdAt: desc}
     ) {
       id
       amount
       type
       createdAt
       objectId
+      path
       object {
         id
         name
         type
       }
     }
-    auditsDone: progress(
+    auditsReceived: transaction(
       where: {
-        isDone: {_eq: true}
-      }
+        type: {_eq: "down"},
+        object: {
+          type: {_eq: "project"}
+        }
+      },
+      order_by: {createdAt: desc}
     ) {
       id
+      amount
+      type
       createdAt
       objectId
-      grade
-      isDone
+      path
       object {
         id
         name
         type
       }
     }
-    auditsReceived: progress(
+    projectProgress: progress(
       where: {
-        isDone: {_eq: true}, 
-        updatedAt: {_is_null: false}
-      }
+        isDone: {_eq: true},
+        object: {
+          type: {_eq: "project"}
+        }
+      },
+      order_by: {createdAt: desc}
     ) {
       id
       createdAt
       objectId
       grade
       isDone
+      path
       object {
         id
         name
         type
       }
+    }
+  }`,
+  
+  skills: `{
+    skills: transaction(
+      where: { 
+        type: { _like: "skill_%" }
+      },
+      order_by: [{ amount: desc }]
+    ) {
+      type
+      amount
+      createdAt
+      path
     }
   }`
 };
@@ -145,13 +186,27 @@ async function fetchProfileData() {
     
     // Fetch audits data
     const auditData = await fetchGraphQL(QUERIES.audits);
-    state.auditData = transformAuditData({
-      done: auditData.auditsDone,
-      received: auditData.auditsReceived
-    });
+    state.auditData = transformAuditData(auditData);
     
-    // Create skills data from XP transactions
-    state.skillsData = transformSkillsData(xpData.transaction);
+    // Use skill data from user query if available, otherwise use XP transactions
+    if (state.user && state.user.skills && state.user.skills.length > 0) {
+      state.skillsData = state.user.skills.map(skill => ({
+        name: skill.type,
+        amount: skill.amount,
+        percentage: 0, // Will be calculated below
+        skill: skill.type.replace('skill_', '')
+      }));
+      
+      // Calculate percentages
+      const totalSkillAmount = state.skillsData.reduce((sum, skill) => sum + skill.amount, 0);
+      state.skillsData.forEach(skill => {
+        skill.percentage = (skill.amount / totalSkillAmount) * 100;
+      });
+    } else {
+      // Fallback to using XP transactions
+      const skillsData = await fetchGraphQL(QUERIES.skills);
+      state.skillsData = transformSkillsData(xpData.transaction);
+    }
     
   } catch (error) {
     console.error('Error fetching profile data:', error);
@@ -160,7 +215,6 @@ async function fetchProfileData() {
     state.isLoading = false;
   }
 }
-
 /**
  * Render the profile component
  * @param {HTMLElement} container - Container to render the profile component
