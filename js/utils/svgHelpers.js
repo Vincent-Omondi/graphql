@@ -434,6 +434,12 @@ function d3ArrayExtent(array, accessor) {
  * @returns {Object} - Object with show and hide methods
  */
 export function createSVGTooltip(svg) {
+  // Remove any existing tooltip to prevent duplicates
+  const existingTooltip = svg.querySelector('.svg-tooltip');
+  if (existingTooltip) {
+    svg.removeChild(existingTooltip);
+  }
+  
   const tooltip = createSVGElement('g', {
     class: 'svg-tooltip',
     visibility: 'hidden'
@@ -457,10 +463,24 @@ export function createSVGTooltip(svg) {
   
   tooltip.appendChild(tooltipRect);
   tooltip.appendChild(tooltipText);
+  
+  // Don't append yet - will append at the end of function
+  
+  // Move tooltip to front function
+  const moveToFront = () => {
+    // Remove and re-append to make it the last child (appears on top)
+    if (tooltip.parentNode) {
+      tooltip.parentNode.removeChild(tooltip);
+    }
+    svg.appendChild(tooltip);
+  };
+  
+  // Now append the tooltip to the SVG
   svg.appendChild(tooltip);
   
   return {
     show: (x, y, text) => {
+      // Set text content
       tooltipText.textContent = text;
       
       // Adjust rectangle size based on text
@@ -471,9 +491,13 @@ export function createSVGTooltip(svg) {
       // Position tooltip
       tooltip.setAttribute('transform', `translate(${x + 10}, ${y - 30})`);
       tooltip.setAttribute('visibility', 'visible');
+      
+      // Ensure tooltip is on top of other elements
+      moveToFront();
     },
     hide: () => {
       tooltip.setAttribute('visibility', 'hidden');
-    }
+    },
+    element: tooltip
   };
 } 
