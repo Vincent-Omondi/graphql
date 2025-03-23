@@ -71,9 +71,31 @@ export function createXPLineChart(xpData, container, options = {}) {
     dimensions,
     {
       xTickValues: xpData
-        .filter((d, i, arr) => i === 0 || i === arr.length - 1 || i % Math.max(1, Math.floor(arr.length / 5)) === 0)
+        .filter((d, i, arr) => {
+          // Show only specific ticks to avoid overcrowding
+          const totalPoints = arr.length;
+          // Always show first and last points
+          if (i === 0 || i === totalPoints - 1) return true;
+          // Show approximately 4-6 points in between
+          const interval = Math.max(1, Math.floor(totalPoints / 5));
+          return i % interval === 0;
+        })
         .map(d => new Date(d.date)),
-      xTickFormat: d => formatDate(d),
+      xTickFormat: (d, i, arr) => {
+        // Safely handle undefined values
+        if (!d) return '';
+        
+        const isFirst = i === 0;
+        const isLast = arr && i === arr.length - 1;
+        
+        // First and last ticks: show month and year
+        if (isFirst || isLast) {
+          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        
+        // Middle ticks: show only month and day
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      },
       yTickFormat: v => formatNumber(v)
     }
   );
@@ -174,9 +196,8 @@ export function createXPLineChart(xpData, container, options = {}) {
       
       // Show tooltip with XP info
       const tooltipText = `
-        Date: ${formatDate(d.date)}
-        Daily XP: ${formatNumber(d.amount)}
-        Total XP: ${formatNumber(d.cumulativeAmount)}
+        ${formatDate(d.date)}
+        Daily XP: ${formatNumber(((d.amount)/1000).toFixed(2))} kB
       `;
       tooltip.show(x, y, tooltipText);
     });
