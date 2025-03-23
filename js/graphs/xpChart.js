@@ -296,9 +296,9 @@ export function createXPBarChart(projectsData, container, options = {}) {
   );
   
   // Set up scales
-  const xScale = i => dimensions.padding + i * ((dimensions.width - 2 * dimensions.padding) / (processedData.length - 1 || 1));
+  const xScale = i => dimensions.padding + 35 + i * ((dimensions.width - 2 * dimensions.padding - 20) / (processedData.length - 1 || 1));
   xScale.domain = () => [0, processedData.length - 1];
-  xScale.range = () => [dimensions.padding, dimensions.width - dimensions.padding];
+  xScale.range = () => [dimensions.padding + 35, dimensions.width - dimensions.padding];
   
   const maxAmount = Math.max(...processedData.map(d => d.amount), 0);
   const yScale = amount => dimensions.height - dimensions.padding - (amount / maxAmount) * (dimensions.height - 2 * dimensions.padding);
@@ -320,7 +320,7 @@ export function createXPBarChart(projectsData, container, options = {}) {
     {
       xTicks: 0, // No x-axis ticks
       yTicks: 5,
-      yTickFormat: value => formatNumber(value),
+      yTickFormat: value => (value / 1000).toFixed(2) + 'kB',
       gridLines: true
     }
   );
@@ -371,22 +371,22 @@ export function createXPBarChart(projectsData, container, options = {}) {
     
     barsGroup.appendChild(bar);
     
-    // Add project label
-    const labelRotation = processedData.length > 5 ? -45 : 0;
+    // Add project labels with consistent rotation to prevent cluttering
     const label = createSVGElement('text', {
       x: xScale(i),
       y: dimensions.height - dimensions.padding + 15,
-      'text-anchor': labelRotation !== 0 ? 'end' : 'middle',
-      'font-size': '10px',
+      'text-anchor': 'end',
+      'font-size': '9px',
       fill: 'var(--tertiary-dark)',
-      transform: `rotate(${labelRotation}, ${xScale(i)}, ${dimensions.height - dimensions.padding + 15})`
+      transform: `rotate(-45, ${xScale(i)}, ${dimensions.height - dimensions.padding + 15})` 
     });
     
     // Shorten project name if too long
-    const projectName = d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name;
+    const projectName = d.name.length > 10 ? d.name.substring(0, 10) + '...' : d.name;
     label.textContent = projectName;
     
-    xAxisGroup.appendChild(label);
+    // Add label to bars group instead of xAxisGroup to keep it within container
+    barsGroup.appendChild(label);
   });
   
   svg.appendChild(barsGroup);
