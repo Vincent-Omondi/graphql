@@ -645,7 +645,36 @@ function renderProfile(container) {
         });
         radarContainer.appendChild(title);
         
-        createSkillsRadarChart(state.skillsData, radarContainer);
+        // Find max value for each skill type
+        const skillMaxValues = {};
+        
+        // Get max values for each skill type
+        state.skillsData.forEach(skill => {
+          const type = skill.skill || skill.name.replace('skill_', '');
+          if (!skillMaxValues[type] || skill.amount > skillMaxValues[type].amount) {
+            skillMaxValues[type] = {
+              name: `skill_${type}`,
+              skill: type,
+              amount: skill.amount,
+              percentage: 0
+            };
+          }
+        });
+        
+        // Convert to array and get top 6 skills
+        const topSkills = Object.values(skillMaxValues)
+          .sort((a, b) => b.amount - a.amount)
+          .slice(0, 6);
+        
+        // Calculate percentages based on maximum possible value
+        const maxPossibleValue = Math.max(...topSkills.map(s => s.amount));
+        topSkills.forEach(skill => {
+          skill.percentage = (skill.amount );
+        });
+        
+        console.log('Top 6 skills with max values:', topSkills);
+        
+        createSkillsRadarChart(topSkills, radarContainer);
       } else {
         createFallbackContent(radarContainer, 'Skills Distribution', 'At least 3 different skill categories are required for the radar chart.');
       }
