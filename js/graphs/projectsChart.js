@@ -18,6 +18,7 @@ export function createDonutChart(data, container, options = {}) {
     animated: true,
     colors: ['var(--secondary)', '#ff5a5a'],
     labels: ['Passed', 'Failed'],
+    legendDistance: 40, 
     ...options
   };
   
@@ -240,7 +241,7 @@ export function createDonutChart(data, container, options = {}) {
   // Add legend
   const legendGroup = createSVGElement('g', {
     class: 'legend',
-    transform: `translate(${centerX - 75}, ${dimensions.height - 60})`
+    transform: `translate(${centerX - 75}, ${dimensions.height - opts.legendDistance})`
   });
   
   segments.forEach((segment, i) => {
