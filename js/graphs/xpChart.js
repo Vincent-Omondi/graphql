@@ -361,7 +361,7 @@ export function createXPBarChart(projectsData, container, options = {}) {
     // Add hover effects and tooltip
     bar.addEventListener('mouseover', () => {
       bar.setAttribute('fill-opacity', 1);
-      tooltip.show(x + barWidth / 2, y, `${d.name}: ${formatNumber(d.amount)} XP`);
+      tooltip.show(x + barWidth / 2, y, `${d.name}: ${formatNumber(((d.amount)/1000).toFixed(2))} kB`);
     });
     
     bar.addEventListener('mouseout', () => {
