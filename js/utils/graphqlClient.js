@@ -68,14 +68,26 @@ export async function fetchGraphQL(query, variables = {}) {
 export function createLoadingIndicator(container) {
   // Create loader element
   const loader = document.createElement('div');
-  loader.className = 'loading-spinner';
+  loader.className = 'loading-wrapper';
   loader.innerHTML = `
-    <div class="spinner"></div>
-    <p>Loading data...</p>
+    <div class="loading-spinner-container">
+      <div class="spinner-ripple">
+        <div></div>
+        <div></div>
+      </div>
+      <div class="loading-text">
+        <span>Loading data</span>
+        <span class="loading-dots">
+          <span class="dot">.</span>
+          <span class="dot">.</span>
+          <span class="dot">.</span>
+        </span>
+      </div>
+    </div>
   `;
-  loader.style.display = 'none';
   
-  // Add to container
+  // Add to container but don't display yet
+  loader.style.display = 'none';
   container.appendChild(loader);
   
   // Return object with show/hide methods
@@ -84,7 +96,12 @@ export function createLoadingIndicator(container) {
       loader.style.display = 'flex';
     },
     hide: () => {
-      loader.style.display = 'none';
+      // Add fade out animation
+      loader.classList.add('fade-out');
+      setTimeout(() => {
+        loader.style.display = 'none';
+        loader.classList.remove('fade-out');
+      }, 300);
     },
     element: loader
   };
@@ -101,7 +118,17 @@ export function showError(container, message) {
   errorElement.innerHTML = `
     <div class="error-icon">⚠️</div>
     <p>${message}</p>
+    <button class="retry-button">Retry</button>
   `;
+  
+  // Add retry functionality
+  const retryButton = errorElement.querySelector('.retry-button');
+  retryButton.addEventListener('click', () => {
+    // Remove error message
+    container.removeChild(errorElement);
+    // Dispatch reload event
+    document.dispatchEvent(new CustomEvent('reload-profile'));
+  });
   
   container.appendChild(errorElement);
 }
