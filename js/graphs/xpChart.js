@@ -40,7 +40,8 @@ export function createXPLineChart(xpData, container, options = {}) {
       xDomain: [
         new Date(xpData[0].date),
         new Date(xpData[xpData.length - 1].date)
-      ]
+      ],
+      yDomain: [0, Math.ceil(Math.max(...xpData.map(d => d.cumulativeAmount)) * 1.05)] // Start from 0 and add 5% padding
     }
   );
   
@@ -81,6 +82,11 @@ export function createXPLineChart(xpData, container, options = {}) {
           return i % interval === 0;
         })
         .map(d => new Date(d.date)),
+      yTickValues: (() => {
+        const max = Math.max(...xpData.map(d => d.cumulativeAmount));
+        const step = Math.ceil(max / 5); // Create 5 evenly distributed ticks
+        return Array.from({ length: 6 }, (_, i) => i * step);
+      })(),
       xTickFormat: (d, i, arr) => {
         // Safely handle undefined values
         if (!d) return '';
@@ -96,7 +102,7 @@ export function createXPLineChart(xpData, container, options = {}) {
         // Middle ticks: show only month and day
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       },
-      yTickFormat: v => formatNumber(v)
+      yTickFormat: v => (v / 1000).toFixed(2) + 'kB'
     }
   );
   
