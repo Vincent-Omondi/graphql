@@ -494,7 +494,7 @@ export function createSkillsRadarChart(skills, container, options = {}) {
       dataPoint.setAttribute('r', 8);
       dataPoint.setAttribute('fill-opacity', 1);
       
-      tooltip.show(point.x, point.y, `${point.skill.name}: ${formatNumber(point.skill.amount)} XP (${point.skill.percentage.toFixed(1)}%)`);
+      tooltip.show(point.x, point.y, `${point.skill.name}: (${point.skill.percentage.toFixed(1)}%)`);
     });
     
     dataPoint.addEventListener('mouseout', () => {
