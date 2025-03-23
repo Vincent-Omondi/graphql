@@ -225,39 +225,58 @@ async function fetchProfileData() {
  * @param {HTMLElement} container - Container to render the profile component
  */
 export function renderProfileComponent(container, user = null) {
-  // Create loading indicator
-  const loadingIndicator = createLoadingIndicator(container);
-  loadingIndicator.show();
-  
   // Create profile container
   const profileContainer = createElement('div', {
     className: 'profile-container glow-container'
   });
   
-  // Fetch profile data
-  fetchProfileData()
-    .then(() => {
-      // Remove loading indicator
-      loadingIndicator.hide();
-      
-      // If there was an error, show error message
-      if (state.error) {
-        showError(profileContainer, state.error);
-        container.appendChild(profileContainer);
-        return;
-      }
-      
-      // Render profile
-      renderProfile(profileContainer);
-      
-      // Add to container
-      container.appendChild(profileContainer);
-    })
-    .catch(error => {
-      loadingIndicator.hide();
-      showError(profileContainer, error.message);
-      container.appendChild(profileContainer);
-    });
+  // Add to container immediately to establish position
+  container.appendChild(profileContainer);
+  
+  // Create loading indicator
+  const loadingIndicator = createLoadingIndicator(container);
+  
+  // Function to load profile data
+  const loadProfileData = () => {
+    // Show loading indicator
+    loadingIndicator.show();
+    
+    // Fetch profile data
+    fetchProfileData()
+      .then(() => {
+        // Remove loading indicator
+        loadingIndicator.hide();
+        
+        // If there was an error, show error message
+        if (state.error) {
+          profileContainer.innerHTML = ''; // Clear any existing content
+          showError(profileContainer, state.error);
+          return;
+        }
+        
+        // Clear container first
+        profileContainer.innerHTML = '';
+        
+        // Render profile
+        renderProfile(profileContainer);
+      })
+      .catch(error => {
+        loadingIndicator.hide();
+        profileContainer.innerHTML = ''; // Clear any existing content
+        showError(profileContainer, error.message);
+      });
+  };
+  
+  // Load profile data initially
+  loadProfileData();
+  
+  // Add event listener for reload
+  document.addEventListener('reload-profile', loadProfileData);
+  
+  // Return a cleanup function
+  return () => {
+    document.removeEventListener('reload-profile', loadProfileData);
+  };
 }
 
 /**
@@ -354,7 +373,7 @@ function renderProfile(container) {
       }),
       createElement('p', {
         className: 'gradient-text',
-        textContent: formatNumber(state.xpData?.total || 0)
+        textContent: `${((state.xpData?.total || 0) / 1000000).toFixed(2)} MB`
       })
     ]),
     createElement('div', {
