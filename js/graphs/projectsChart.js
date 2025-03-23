@@ -71,6 +71,67 @@ export function createDonutChart(data, container, options = {}) {
     
     const endAngle = startAngle + segment.angle;
     
+    // Special handling for 100% case
+    if (segment.percentage >= 99.9 && segment.label === opts.labels[0]) {
+      // Draw a complete donut with two concentric circles
+      const donutGroup = createSVGElement('g', {
+        class: 'donut-complete',
+        'fill-rule': 'evenodd'
+      });
+      
+      // Outer circle
+      const outerCircle = createSVGElement('circle', {
+        cx: centerX,
+        cy: centerY,
+        r: opts.outerRadius,
+        fill: segment.color,
+        'fill-opacity': 0.8,
+        stroke: 'var(--primary)',
+        'stroke-width': 1
+      });
+      
+      // Inner circle (creates the hole)
+      const innerCircle = createSVGElement('circle', {
+        cx: centerX,
+        cy: centerY,
+        r: opts.innerRadius,
+        fill: 'var(--primary)'
+      });
+      
+      donutGroup.appendChild(outerCircle);
+      donutGroup.appendChild(innerCircle);
+      
+      // Add animation
+      if (opts.animated) {
+        donutGroup.style.transform = 'scale(0.8)';
+        donutGroup.style.transformOrigin = `${centerX}px ${centerY}px`;
+        donutGroup.style.opacity = 0;
+        donutGroup.style.transition = 'transform 0.5s ease-out, opacity 0.5s ease-out';
+        
+        setTimeout(() => {
+          donutGroup.style.transform = 'scale(1)';
+          donutGroup.style.opacity = 1;
+        }, 10);
+      }
+      
+      // Add hover effects
+      donutGroup.addEventListener('mouseover', () => {
+        outerCircle.setAttribute('fill-opacity', 1);
+        donutGroup.style.transform = 'scale(1.05)';
+        tooltip.show(centerX + opts.outerRadius/2, centerY, 
+          `${segment.label}: ${segment.value} (${segment.percentage.toFixed(1)}%)`);
+      });
+      
+      donutGroup.addEventListener('mouseout', () => {
+        outerCircle.setAttribute('fill-opacity', 0.8);
+        donutGroup.style.transform = 'scale(1)';
+        tooltip.hide();
+      });
+      
+      svg.appendChild(donutGroup);
+      return;
+    }
+    
     // Calculate path coordinates
     const x1 = centerX + opts.innerRadius * Math.cos(startAngle - Math.PI / 2);
     const y1 = centerY + opts.innerRadius * Math.sin(startAngle - Math.PI / 2);
