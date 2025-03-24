@@ -451,7 +451,7 @@ export function createSVGTooltip(svg) {
     fill: 'var(--primary-dark)',
     stroke: 'var(--secondary)',
     'stroke-width': 1,
-    opacity: 0.9
+    opacity: 0.95
   });
   
   const tooltipText = createSVGElement('text', {
@@ -463,8 +463,6 @@ export function createSVGTooltip(svg) {
   
   tooltip.appendChild(tooltipRect);
   tooltip.appendChild(tooltipText);
-  
-  // Don't append yet - will append at the end of function
   
   // Move tooltip to front function
   const moveToFront = () => {
@@ -488,8 +486,18 @@ export function createSVGTooltip(svg) {
       tooltipRect.setAttribute('width', textBBox.width + 20);
       tooltipRect.setAttribute('height', textBBox.height + 10);
       
-      // Position tooltip
-      tooltip.setAttribute('transform', `translate(${x + 10}, ${y - 30})`);
+      // Position tooltip - ensure it stays within the SVG bounds
+      const svgBounds = svg.getBoundingClientRect();
+      let tooltipX = x + 10;
+      let tooltipY = y - 30;
+      
+      // Basic bounds checking to keep tooltip visible
+      const tooltipWidth = textBBox.width + 20;
+      if (tooltipX + tooltipWidth > svgBounds.width) {
+        tooltipX = x - tooltipWidth - 10; // Position to the left instead
+      }
+      
+      tooltip.setAttribute('transform', `translate(${tooltipX}, ${tooltipY})`);
       tooltip.setAttribute('visibility', 'visible');
       
       // Ensure tooltip is on top of other elements
