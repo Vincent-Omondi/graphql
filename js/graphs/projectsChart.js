@@ -289,9 +289,6 @@ export function createDonutChart(data, container, options = {}) {
   
   svg.appendChild(title);
   
-  // Add the SVG to the container
-  container.appendChild(svg);
-  
   return {
     svg,
     tooltip
@@ -337,6 +334,10 @@ export function createSkillsRadarChart(skills, container, options = {}) {
   
   // Create SVG container
   const { svg, dimensions: svgDimensions } = createSVGContainer(dimensions.width, dimensions.height);
+  
+  // Add a transform to push the entire chart down
+  svg.setAttribute('transform', 'translate(0, 30)');
+  
   container.appendChild(svg);
   
   // Calculate angles for each axis
@@ -511,7 +512,7 @@ export function createSkillsRadarChart(skills, container, options = {}) {
   // Add title
   const title = createSVGElement('text', {
     x: dimensions.width / 2,
-    y: 30,
+    y: 5,
     'text-anchor': 'middle',
     'font-size': '18px',
     fill: 'var(--tertiary)',
