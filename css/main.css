@@ -9,6 +9,21 @@
   --tertiary: #ffffff;
   --tertiary-dark: #a9bbd3;
   
+  /* Accent Colors (for charts and visualizations) */
+  --accent-color: #00BAB7;
+  --accent-rgb: 0, 186, 183;
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --danger-color: #f44336;
+  --text-color: #ffffff;
+  
+  /* Chart Colors */
+  --chart-color-1: #00BAB7;
+  --chart-color-2: #2e4a6f;
+  --chart-color-3: #D499B9;
+  --chart-color-4: #9055A2;
+  --chart-color-5: #2D6B7C;
+  
   /* Card Colors */
   --card-bg: #223247;
   --card-text: #00BAB7;
@@ -55,6 +70,8 @@
   --medium: 500;
   --bold: 600;
   --bolder: 700;
+  --text-color: #111821;
+  --accent-color: #00BAB7;
 }
 
 /* Global Reset */
@@ -96,10 +113,11 @@ body {
   color: var(--tertiary);
   background: var(--primary);
   transition: all var(--transition-normal);
-  height: 100%;
+  height: auto;
+  min-height: 100%;
   width: 100%;
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto !important;
   position: relative;
   font-family: 'Roboto', sans-serif;
 }
@@ -303,3 +321,74 @@ textarea:focus {
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .hidden { display: none; }
+
+/* SVG Styles - Enhanced */
+svg {
+  display: block;
+  max-width: 100%;
+  font-family: 'Roboto', sans-serif;
+  overflow: visible;
+}
+
+.svg-graph {
+  font-family: 'Roboto', sans-serif;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: visible;
+}
+
+.svg-graph text {
+  fill: var(--tertiary-dark);
+  font-size: 12px;
+}
+
+.svg-graph .axis line,
+.svg-graph .axis path {
+  stroke: var(--tertiary-dark);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.svg-graph .grid line {
+  stroke: var(--tertiary-dark);
+  stroke-width: 0.5;
+  opacity: 0.2;
+}
+
+.svg-graph path.line {
+  stroke: var(--secondary);
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.svg-graph path.area {
+  fill: var(--secondary);
+  opacity: 0.1;
+}
+
+.svg-graph circle.data-point {
+  fill: var(--secondary);
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+
+.svg-graph .bar {
+  fill: var(--secondary);
+  transition: opacity 0.3s;
+}
+
+.svg-graph .bar:hover {
+  opacity: 0.8;
+}
+
+.chart-title {
+  color: var(--tertiary);
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  text-align: center;
+  padding: 0 10px;
+}
+
+/* Import Component Styles */
+@import url('./components/login.css');
+@import url('./components/profile.css');
