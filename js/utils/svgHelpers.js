@@ -29,8 +29,6 @@ export function createSVGElement(tag, attributes = {}) {
  * @returns {Object} - Object containing the SVG element and dimensions
  */
 export function createSVGContainer(width, height, padding = 40) {
-  console.log('Creating SVG container with:', { width, height, padding });
-  
   try {
     const svg = createSVGElement('svg', {
       width: '100%',
@@ -49,15 +47,9 @@ export function createSVGContainer(width, height, padding = 40) {
       innerHeight: height - (padding * 2)
     };
     
-    console.log('SVG container created successfully:', { 
-      svg: svg, 
-      dimensions: dimensions,
-      hasAppendChild: typeof svg.appendChild === 'function'
-    });
-    
     return { svg, dimensions };
   } catch (error) {
-    console.error('Error creating SVG container:', error);
+    console.error('Error creating SVG container');
     // Return a fallback empty div element and dimensions
     const fallbackElement = document.createElement('div');
     fallbackElement.className = 'svg-error';
@@ -82,14 +74,7 @@ export function createAxes(svg, dimensions, options = {}) {
   // or is directly an SVG element
   const svgElement = svg.svg || svg;
   
-  console.log('Creating axes with:', { 
-    svgType: typeof svgElement,
-    hasAppendChild: typeof svgElement.appendChild === 'function',
-    dimensions
-  });
-  
   if (!svgElement || typeof svgElement.appendChild !== 'function') {
-    console.error('Invalid SVG element passed to createAxes:', svgElement);
     throw new Error('Invalid SVG element');
   }
   
@@ -192,21 +177,17 @@ export function addAxisTicks(axisGroups, scales, dimensions, options) {
     if (typeof xScale.domain === 'function' && typeof yScale.domain === 'function') {
       xDomain = xScale.domain();
       yDomain = yScale.domain();
-      console.log('Using domain() function to get domains:', { xDomain, yDomain });
     } else {
       // Fallback for when domain function is unavailable
       throw new Error('domain() function not available');
     }
   } catch (e) {
-    console.warn('Error accessing domain via function, using direct domain property:', e.message);
-    
     // Try to access domain property directly
     if (xScale.domain !== undefined && yScale.domain !== undefined) {
       xDomain = xScale.domain;
       yDomain = yScale.domain;
     } else {
       // Last resort fallback
-      console.warn('Using fallback domain values');
       xDomain = [0, 100];
       yDomain = [0, 100];
     }
@@ -311,32 +292,44 @@ export function addAxisTicks(axisGroups, scales, dimensions, options) {
  * @returns {Object} - Object with xScale and yScale functions
  */
 export function createScales(data, dimensions, options = {}) {
-  const { width, height, padding } = dimensions;
-  const {
-    xDomain,
-    yDomain,
-    xAccessor = d => d.x,
-    yAccessor = d => d.y
-  } = options;
+  // Extract dimension values with defaults
+  const width = dimensions?.width || 400;
+  const height = dimensions?.height || 300;
+  const padding = dimensions?.padding || 40;
+  
+  // Extract options with fallbacks
+  let xAccessor, yAccessor;
+  
+  // Handle both accessor styles (function or key string)
+  if (typeof options.xAccessor === 'function') {
+    xAccessor = options.xAccessor;
+  } else if (options.xKey) {
+    xAccessor = d => d[options.xKey];
+  } else {
+    xAccessor = d => d.x || d.date || 0;
+  }
+  
+  if (typeof options.yAccessor === 'function') {
+    yAccessor = options.yAccessor;
+  } else if (options.yKey) {
+    yAccessor = d => d[options.yKey];
+  } else {
+    yAccessor = d => d.y || d.value || d.ratio || 0;
+  }
+  
+  // Get domains
+  const xDomain = options.xDomain || (Array.isArray(data) ? d3ArrayExtent(data, xAccessor) : [0, 1]);
+  const yDomain = options.yDomain || (Array.isArray(data) ? d3ArrayExtent(data, yAccessor) : [0, 1]);
   
   try {
     // Create x-scale
-    const xExtent = xDomain || d3ArrayExtent(data, xAccessor);
-    const xScale = d3ScaleLinear(xExtent, [padding, width - padding]);
+    const xScale = d3ScaleLinear(xDomain, [padding, width - padding]);
     
     // Create y-scale (inverted for SVG coordinate system)
-    const yExtent = yDomain || d3ArrayExtent(data, yAccessor);
-    const yScale = d3ScaleLinear(yExtent, [height - padding, padding]);
-    
-    console.log('Created scales with domains:', {
-      xDomain: xScale.domain(),
-      yDomain: yScale.domain()
-    });
+    const yScale = d3ScaleLinear(yDomain, [height - padding, padding]);
     
     return { xScale, yScale };
   } catch (error) {
-    console.error('Error creating scales:', error);
-    
     // Create fallback scales
     const fallbackXScale = value => padding + (value / 100) * (width - 2 * padding);
     fallbackXScale.domain = () => [0, 100];
@@ -353,36 +346,35 @@ export function createScales(data, dimensions, options = {}) {
   }
 }
 
-// Simple implementations of D3-like functions for scales and extents
+// Simple implementation of D3-like linear scale
 function d3ScaleLinear(domain, range) {
-  console.log('Creating scale with domain:', domain, 'and range:', range);
-  
   // Handle invalid domains
   if (!domain || !Array.isArray(domain) || domain.length !== 2) {
-    console.warn('Invalid domain provided to scale, using default [0, 1]', domain);
     domain = [0, 1];
   }
   
-  const domainStart = domain[0] instanceof Date ? domain[0].getTime() : domain[0];
-  const domainEnd = domain[1] instanceof Date ? domain[1].getTime() : domain[1];
-  const domainDiff = domainEnd - domainStart;
+  // Handle invalid ranges
+  if (!range || !Array.isArray(range) || range.length !== 2) {
+    range = [0, 100];
+  }
+  
+  // Convert date objects to timestamps
+  const domainStart = domain[0] instanceof Date ? domain[0].getTime() : Number(domain[0]) || 0;
+  const domainEnd = domain[1] instanceof Date ? domain[1].getTime() : Number(domain[1]) || 1;
+  
+  // Ensure domain values are different
+  const domainDiff = (domainEnd === domainStart) ? 1 : domainEnd - domainStart;
   const rangeDiff = range[1] - range[0];
   
   // Create the scale function
   const scale = value => {
     // Handle edge cases
-    if (domainDiff === 0) {
-      console.warn('Domain difference is 0, returning range midpoint');
-      return (range[0] + range[1]) / 2;
-    }
-    
     if (value === undefined || value === null) {
-      console.warn('Undefined or null value provided to scale, returning range minimum');
       return range[0];
     }
     
     // Handle date objects
-    const val = value instanceof Date ? value.getTime() : value;
+    const val = value instanceof Date ? value.getTime() : Number(value) || 0;
     
     // Calculate normalized value
     const normalizedValue = (val - domainStart) / domainDiff;
@@ -448,16 +440,16 @@ export function createSVGTooltip(svg) {
   const tooltipRect = createSVGElement('rect', {
     rx: 5,
     ry: 5,
-    fill: 'var(--primary-dark)',
-    stroke: 'var(--secondary)',
+    fill: 'var(--primary-dark, #222)',
+    stroke: 'var(--secondary, #444)',
     'stroke-width': 1,
     opacity: 0.95
   });
   
   const tooltipText = createSVGElement('text', {
     x: 10,
-    y: 15,
-    fill: 'var(--tertiary)',
+    y: 20,
+    fill: 'var(--tertiary, #fff)',
     'font-size': '12px'
   });
   
@@ -473,26 +465,44 @@ export function createSVGTooltip(svg) {
     svg.appendChild(tooltip);
   };
   
-  // Now append the tooltip to the SVG
+  // Append the tooltip to the SVG
   svg.appendChild(tooltip);
   
   return {
     show: (x, y, text) => {
-      // Set text content
-      tooltipText.textContent = text;
+      // Format the text (remove HTML tags) and split into lines
+      const plainText = text.replace(/<[^>]*>?/gm, '').trim();
+      const lines = plainText.split('\n');
       
-      // Adjust rectangle size based on text
-      const textBBox = tooltipText.getBBox();
-      tooltipRect.setAttribute('width', textBBox.width + 20);
-      tooltipRect.setAttribute('height', textBBox.height + 10);
+      // Clear existing text
+      while (tooltipText.firstChild) {
+        tooltipText.removeChild(tooltipText.firstChild);
+      }
+      
+      // Add each line
+      lines.forEach((line, i) => {
+        const tspan = createSVGElement('tspan', {
+          x: 10,
+          y: 20 + (i * 16),
+          'font-size': '12px'
+        });
+        tspan.textContent = line.trim();
+        tooltipText.appendChild(tspan);
+      });
+      
+      // Set a fixed width
+      const tooltipWidth = 150;
+      const tooltipHeight = lines.length * 16 + 10;
+      
+      tooltipRect.setAttribute('width', tooltipWidth);
+      tooltipRect.setAttribute('height', tooltipHeight);
       
       // Position tooltip - ensure it stays within the SVG bounds
       const svgBounds = svg.getBoundingClientRect();
       let tooltipX = x + 10;
-      let tooltipY = y - 30;
+      let tooltipY = y - tooltipHeight - 5;
       
       // Basic bounds checking to keep tooltip visible
-      const tooltipWidth = textBBox.width + 20;
       if (tooltipX + tooltipWidth > svgBounds.width) {
         tooltipX = x - tooltipWidth - 10; // Position to the left instead
       }
