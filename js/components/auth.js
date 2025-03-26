@@ -36,7 +36,7 @@ export async function login(credentials) {
       // Try to get error details from response
       try {
         const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
+        errorMessage = errorData.error || errorData.message || errorMessage;
       } catch (e) {
         // If parsing JSON fails, use status text
         errorMessage = response.statusText || errorMessage;
@@ -77,7 +77,17 @@ export async function login(credentials) {
     };
     
   } catch (error) {
-    console.error('Login error:', error);
+    // Don't log credential errors (401/403) as they are expected
+    if (error.message.includes('401') || 
+        error.message.includes('403') || 
+        error.message.toLowerCase().includes('incorrect') || 
+        error.message.toLowerCase().includes('forbidden') ||
+        error.message.toLowerCase().includes('not exist')) {
+      // Expected error during login - don't log to console
+    } else {
+      // Log unexpected errors
+      console.error('Login error:', error);
+    }
     throw error;
   }
 }
@@ -176,7 +186,7 @@ export function getAuthHeaders() {
 export function renderLoginComponent(container) {
   const loginHTML = `
     <div class="login-container glow-container">
-      <a href="/" class="back-to-home hover-scale">
+      <a href="#/" class="back-to-home hover-scale">
         <i class="fas fa-arrow-left"></i> Back
       </a>
       
@@ -329,8 +339,16 @@ function setupLoginEvents() {
       loginSpinner.classList.add('hidden');
       loginText.textContent = 'Sign In';
       
-      // Display error message
-      authError.textContent = error.message || 'Authentication failed. Please check your credentials and try again.';
+      // Display user-friendly error message
+      if (error.message.includes('401') || 
+          error.message.includes('403') || 
+          error.message.toLowerCase().includes('incorrect') || 
+          error.message.toLowerCase().includes('forbidden')) {
+        authError.textContent = 'Username or password is incorrect';
+      } else {
+        authError.textContent = error.message || 'Authentication failed. Please try again.';
+      }
+      
       authError.classList.remove('hidden');
     }
   });

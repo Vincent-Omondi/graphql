@@ -12,13 +12,13 @@ export function createDonutChart(data, container, options = {}) {
   // Default options
   const opts = {
     width: 400,
-    height: 400,
-    innerRadius: 80,
-    outerRadius: 150,
+    height: 200,
+    innerRadius: 50,
+    outerRadius: 100,
     animated: true,
     colors: ['var(--secondary)', '#ff5a5a'],
     labels: ['Passed', 'Failed'],
-    legendDistance: 40, 
+    legendDistance: 5, 
     ...options
   };
   
@@ -30,7 +30,7 @@ export function createDonutChart(data, container, options = {}) {
   
   // Center point
   const centerX = dimensions.width / 2;
-  const centerY = dimensions.height / 2;
+  const centerY = dimensions.height / 2 - 10; // Move center point up slightly
   
   // Create SVG container
   const { svg, dimensions: svgDimensions } = createSVGContainer(dimensions.width, dimensions.height);
@@ -241,12 +241,17 @@ export function createDonutChart(data, container, options = {}) {
   // Add legend
   const legendGroup = createSVGElement('g', {
     class: 'legend',
-    transform: `translate(${centerX - 75}, ${dimensions.height - opts.legendDistance})`
+    transform: `translate(${dimensions.width / 2}, ${dimensions.height - opts.legendDistance})`
   });
+  
+  // Calculate total width of legend items to center them
+  const itemWidth = 160; // Approximate width of each legend item
+  const totalLegendWidth = segments.length * itemWidth;
+  const startX = -totalLegendWidth / 2; // Start position to center the legend
   
   segments.forEach((segment, i) => {
     const legendItem = createSVGElement('g', {
-      transform: `translate(0, ${i * 25})`
+      transform: `translate(${startX + (i * itemWidth)}, 0)`
     });
     
     // Color box
@@ -279,7 +284,7 @@ export function createDonutChart(data, container, options = {}) {
   // Add title
   const title = createSVGElement('text', {
     x: dimensions.width / 2,
-    y: 30,
+    y: -15,
     'text-anchor': 'middle',
     'font-size': '18px',
     fill: 'var(--tertiary)',
@@ -288,6 +293,9 @@ export function createDonutChart(data, container, options = {}) {
   title.textContent = 'Project Success Rate';
   
   svg.appendChild(title);
+  
+  // Add a transform to push the entire chart down
+  svg.setAttribute('transform', 'translate(0, 10)');
   
   return {
     svg,
@@ -313,9 +321,9 @@ export function createSkillsRadarChart(skills, container, options = {}) {
   
   // Default options
   const opts = {
-    width: 500,
-    height: 500,
-    radius: 200,
+    width: 450,
+    height: 300,
+    radius: 105,
     color: 'var(--secondary)',
     animated: true,
     levels: 5,
@@ -336,7 +344,7 @@ export function createSkillsRadarChart(skills, container, options = {}) {
   const { svg, dimensions: svgDimensions } = createSVGContainer(dimensions.width, dimensions.height);
   
   // Add a transform to push the entire chart down
-  svg.setAttribute('transform', 'translate(0, 30)');
+  svg.setAttribute('transform', 'translate(0, 20)');
   
   container.appendChild(svg);
   
@@ -366,7 +374,7 @@ export function createSkillsRadarChart(skills, container, options = {}) {
     });
     
     // Axis label
-    const labelDistance = opts.radius + 20;
+    const labelDistance = opts.radius + 15;
     const labelX = centerX + labelDistance * Math.cos(angle);
     const labelY = centerY + labelDistance * Math.sin(angle);
     
@@ -376,7 +384,7 @@ export function createSkillsRadarChart(skills, container, options = {}) {
       'text-anchor': Math.abs(angle) < 0.1 || Math.abs(angle - Math.PI) < 0.1 ? 'middle' : angle > 0 && angle < Math.PI ? 'start' : 'end',
       'dominant-baseline': Math.abs(angle + Math.PI / 2) < 0.1 || Math.abs(angle - Math.PI / 2) < 0.1 ? 'middle' : angle > -Math.PI / 2 && angle < Math.PI / 2 ? 'end' : 'start',
       'font-size': '14px',
-      fill: 'var(--tertiary-dark)'
+      fill: 'var(--tertiary)'
     });
     
     // Format skill name for display
@@ -412,13 +420,13 @@ export function createSkillsRadarChart(skills, container, options = {}) {
     levelGroup.appendChild(levelCircle);
     
     // Add percentage labels to the rightmost point
-    if (level === opts.levels || level % Math.ceil(opts.levels / 3) === 0) {
+    if (level === opts.levels || level % Math.ceil(opts.levels / 2) === 0) {
       const percentLabel = createSVGElement('text', {
         x: centerX + levelRadius + 5,
         y: centerY,
         'font-size': '12px',
-        fill: 'var(--tertiary-dark)',
-        opacity: 0.7
+        fill: 'var(--tertiary)',
+        opacity: 0.9
       });
       percentLabel.textContent = `${Math.round((level / opts.levels) * 100)}%`;
       levelGroup.appendChild(percentLabel);
@@ -495,7 +503,7 @@ export function createSkillsRadarChart(skills, container, options = {}) {
       dataPoint.setAttribute('r', 8);
       dataPoint.setAttribute('fill-opacity', 1);
       
-      tooltip.show(point.x, point.y, `${point.skill.name}: (${point.skill.percentage.toFixed(1)}%)`);
+      tooltip.show(point.x, point.y, `${point.skill.skill || point.skill.name}: ${formatNumber(point.skill.amount)} XP (${point.skill.percentage.toFixed(1)}%)`);
     });
     
     dataPoint.addEventListener('mouseout', () => {
@@ -512,7 +520,7 @@ export function createSkillsRadarChart(skills, container, options = {}) {
   // Add title
   const title = createSVGElement('text', {
     x: dimensions.width / 2,
-    y: 5,
+    y: 10,
     'text-anchor': 'middle',
     'font-size': '18px',
     fill: 'var(--tertiary)',

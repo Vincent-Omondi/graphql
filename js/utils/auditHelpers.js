@@ -175,18 +175,30 @@ export function analyzeAuditDetails(auditsDone, auditsReceived) {
  * @param {Array} auditsReceived - "down" transactions received by the user
  * @returns {Array} Audit history with monthly data points
  */
-/**
- * Get audit history trend based on transaction amounts
- * @param {Array} auditsDone - "up" transactions completed by the user
- * @param {Array} auditsReceived - "down" transactions received by the user
- * @returns {Array} Audit history with monthly data points
- */
 export function getAuditHistoryTrend(auditsDone, auditsReceived) {
   // Create a map of months
   const monthsMap = {};
   
+  // Ensure we're working with arrays
+  const doneArray = Array.isArray(auditsDone) ? auditsDone : [];
+  const receivedArray = Array.isArray(auditsReceived) ? auditsReceived : [];
+  
+  // If no data, return at least one placeholder data point to prevent "no data" message
+  if (doneArray.length === 0 && receivedArray.length === 0) {
+    const currentDate = new Date();
+    return [{
+      month: `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}`,
+      done: 0,
+      received: 0,
+      doneAmount: 0,
+      receivedAmount: 0,
+      date: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+      ratio: 1
+    }];
+  }
+  
   // Process done audits from "up" transactions
-  auditsDone.forEach(audit => {
+  doneArray.forEach(audit => {
     const date = new Date(audit.createdAt);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
@@ -206,7 +218,7 @@ export function getAuditHistoryTrend(auditsDone, auditsReceived) {
   });
   
   // Process received audits from "down" transactions
-  auditsReceived.forEach(audit => {
+  receivedArray.forEach(audit => {
     const date = new Date(audit.createdAt);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
@@ -226,13 +238,29 @@ export function getAuditHistoryTrend(auditsDone, auditsReceived) {
   });
   
   // Convert to array and sort by date
-  return Object.values(monthsMap)
+  const history = Object.values(monthsMap)
     .map(month => ({
       ...month,
       ratio: month.receivedAmount > 0 ? month.doneAmount / month.receivedAmount : 
-             month.doneAmount > 0 ? month.doneAmount / 1000 : 1
+             month.doneAmount > 0 ? 1 : 1 // Simplify the fallback logic
     }))
     .sort((a, b) => a.date - b.date);
+  
+  // Ensure we have at least one data point
+  if (history.length === 0) {
+    const currentDate = new Date();
+    history.push({
+      month: `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}`,
+      done: 0,
+      received: 0,
+      doneAmount: 0,
+      receivedAmount: 0,
+      date: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+      ratio: 1
+    });
+  }
+  
+  return history;
 }
 export default {
   calculateAuditRatio,

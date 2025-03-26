@@ -7,7 +7,7 @@ import { createElement, formatNumber, formatDate, createTabs } from '../utils/do
 import { transformXpData, transformProjectResults, transformSkillsData, transformAuditData } from '../utils/dataTransformers.js';
 import { createXPLineChart, createXPBarChart } from '../graphs/xpChart.js';
 import { createDonutChart, createSkillsRadarChart } from '../graphs/projectsChart.js';
-import { createAuditRatioChart, createAuditComparisonChart } from '../graphs/auditChart.js';
+import { createAuditComparisonChart, createAuditActivityTable } from '../graphs/auditChart.js';
 
 // Application state
 const state = {
@@ -190,8 +190,11 @@ async function fetchProfileData() {
     state.projectResults = transformProjectResults(resultsData.result);
     
     // Fetch audits data
+    console.log('About to fetch audit data...');
     const auditData = await fetchGraphQL(QUERIES.audits);
+    console.log('Raw audit data from GraphQL:', auditData);
     state.auditData = transformAuditData(auditData);
+    console.log('Transformed audit data:', state.auditData);
     
     // Use skill data from user query if available, otherwise use XP transactions
     if (state.user && state.user.skills && state.user.skills.length > 0) {
@@ -547,8 +550,6 @@ function renderProfile(container) {
   
   // Render charts after DOM is updated
   setTimeout(() => {
-    console.log('Rendering charts with data state:', state);
-    
     // Basic fallback for any chart container
     const createFallbackContent = (container, title, message) => {
       container.innerHTML = '';
@@ -570,12 +571,6 @@ function renderProfile(container) {
       // XP charts
       const xpLineContainer = document.querySelector('#xp-line-chart');
       const xpBarContainer = document.querySelector('#xp-bar-chart');
-      
-      // Debug data
-      console.log('XP Data for charts:', {
-        byDate: state.xpData?.byDate || [],
-        byProject: state.xpData?.byProject || []
-      });
       
       // XP Line Chart
       if (state.xpData?.byDate && state.xpData.byDate.length > 1) {
@@ -610,12 +605,6 @@ function renderProfile(container) {
       // Projects tab
       const donutContainer = document.querySelector('#projects-donut-chart');
       const radarContainer = document.querySelector('#skills-radar-chart');
-      
-      // Debug data
-      console.log('Project Data for charts:', {
-        results: state.projectResults || {},
-        skills: state.skillsData || []
-      });
       
       // Project Donut Chart
       if (state.projectResults && state.projectResults.total > 0) {
@@ -669,10 +658,8 @@ function renderProfile(container) {
         // Calculate percentages based on maximum possible value
         const maxPossibleValue = Math.max(...topSkills.map(s => s.amount));
         topSkills.forEach(skill => {
-          skill.percentage = (skill.amount );
+          skill.percentage = (skill.amount);
         });
-        
-        console.log('Top 6 skills with max values:', topSkills);
         
         createSkillsRadarChart(topSkills, radarContainer);
       } else {
@@ -683,22 +670,22 @@ function renderProfile(container) {
       const ratioContainer = document.querySelector('#audit-ratio-chart');
       const comparisonContainer = document.querySelector('#audit-comparison-chart');
       
-      // Debug data
-      console.log('Audit Data for charts:', state.auditData || {});
-      
-      // Audit Ratio Chart
-      if (state.auditData && state.auditData.history && state.auditData.history.length > 0) {
+      // Replace Audit Ratio Chart with Audit Activity Table
+      if (state.auditData && (state.auditData.auditsDone || state.auditData.auditsReceived)) {
         ratioContainer.innerHTML = ''; // Clear container
         
-        const title = createElement('h3', {
+        const tableTitle = createElement('h3', {
           className: 'chart-title',
-          textContent: 'Audit Ratio History'
+          textContent: 'Audit Activity History'
         });
-        ratioContainer.appendChild(title);
+        ratioContainer.appendChild(tableTitle);
         
-        createAuditRatioChart(state.auditData.history, ratioContainer);
+        // Create the table directly in the ratio chart container
+        const tableResult = createAuditActivityTable(state.auditData, ratioContainer, {
+          maxHeight: '300px' // Match the height of the original chart
+        });
       } else {
-        createFallbackContent(ratioContainer, 'Audit Ratio History', 'No audit history data available to display ratio over time.');
+        createFallbackContent(ratioContainer, 'Audit Activity History', 'No audit activity data available to display.');
       }
       
       // Audit Comparison Chart

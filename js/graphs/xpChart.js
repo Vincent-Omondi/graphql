@@ -247,9 +247,6 @@ export function createXPLineChart(xpData, container, options = {}) {
  * @returns {Object} Chart components
  */
 export function createXPBarChart(projectsData, container, options = {}) {
-  // Print data for debugging
-  console.log('Creating XP bar chart with data:', projectsData);
-  
   // Clear container
   container.innerHTML = '';
   
@@ -272,8 +269,6 @@ export function createXPBarChart(projectsData, container, options = {}) {
     name: d.project || d.name || 'Unknown Project',
     amount: d.amount || 0
   }));
-  
-  console.log('Processed data:', processedData);
   
   // Dimensions
   const dimensions = {

@@ -383,12 +383,126 @@ svg {
 
 .chart-title {
   color: var(--tertiary);
-  font-size: 1.2rem;
-  margin-bottom: 15px;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
   text-align: center;
-  padding: 0 10px;
+  padding: 0 1rem;
+  font-weight: var(--bold);
+  letter-spacing: 0.05rem;
 }
 
 /* Import Component Styles */
 @import url('./components/login.css');
 @import url('./components/profile.css');
+
+/* Audit Activity Table Styles */
+.audit-activity-table {
+  font-size: 1.4rem;
+  color: var(--text-color);
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Roboto', sans-serif;
+  letter-spacing: 0.03rem;
+}
+
+.audit-table-wrapper {
+  border-radius: var(--radius-md);
+  background-color: rgba(0, 0, 0, 0.2);
+  max-height: 400px;
+  overflow-y: auto;
+  width: 100%;
+  border: 1px solid rgba(0, 186, 183, 0.2);
+  box-shadow: var(--shadow-sm);
+}
+
+.audit-activity-table th {
+  position: sticky;
+  top: 0;
+  background-color: var(--primary);
+  z-index: 10;
+  font-weight: var(--bold);
+  padding: 1.5rem 1.2rem;
+  text-align: left;
+  border-bottom: 2px solid rgba(0, 186, 183, 0.3);
+  letter-spacing: 0.05rem;
+  font-size: 1.4rem;
+  color: var(--secondary);
+  box-shadow: 0 -1px 0 var(--primary), 0 1px 0 var(--primary);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.audit-activity-table thead {
+  background-color: var(--primary);
+}
+
+.audit-activity-table thead tr {
+  background-color: var(--primary);
+}
+
+.audit-activity-table th::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: var(--primary);
+  z-index: -1;
+}
+
+.audit-activity-table td {
+  padding: 1.2rem;
+  font-weight: var(--medium);
+  border-bottom: 1px solid rgba(46, 74, 111, 0.3);
+  font-size: 1.4rem;
+}
+
+.audit-activity-table tr {
+  transition: background-color var(--transition-fast);
+}
+
+.audit-activity-table tr:hover {
+  background-color: rgba(0, 186, 183, 0.1);
+}
+
+.audit-table-container {
+  padding: 0;
+  margin-top: 0;
+}
+
+.table-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 1rem 1.5rem;
+  font-size: 1.4rem;
+  color: var(--text-color);
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 186, 183, 0.2);
+}
+
+.full-width-container {
+  width: 100%;
+  margin-top: 3rem;
+}
+
+/* Scrollbar styles for audit table */
+.audit-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.audit-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.audit-table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 186, 183, 0.3);
+  border-radius: 4px;
+}
+
+.audit-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 186, 183, 0.5);
+}
