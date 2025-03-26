@@ -7,7 +7,7 @@ import { createElement, formatNumber, formatDate, createTabs } from '../utils/do
 import { transformXpData, transformProjectResults, transformSkillsData, transformAuditData } from '../utils/dataTransformers.js';
 import { createXPLineChart, createXPBarChart } from '../graphs/xpChart.js';
 import { createDonutChart, createSkillsRadarChart } from '../graphs/projectsChart.js';
-import { createAuditRatioChart, createAuditComparisonChart } from '../graphs/auditChart.js';
+import { createAuditComparisonChart, createAuditActivityTable } from '../graphs/auditChart.js';
 
 // Application state
 const state = {
@@ -190,8 +190,11 @@ async function fetchProfileData() {
     state.projectResults = transformProjectResults(resultsData.result);
     
     // Fetch audits data
+    console.log('About to fetch audit data...');
     const auditData = await fetchGraphQL(QUERIES.audits);
+    console.log('Raw audit data from GraphQL:', auditData);
     state.auditData = transformAuditData(auditData);
+    console.log('Transformed audit data:', state.auditData);
     
     // Use skill data from user query if available, otherwise use XP transactions
     if (state.user && state.user.skills && state.user.skills.length > 0) {
@@ -667,19 +670,22 @@ function renderProfile(container) {
       const ratioContainer = document.querySelector('#audit-ratio-chart');
       const comparisonContainer = document.querySelector('#audit-comparison-chart');
       
-      // Audit Ratio Chart
-      if (state.auditData && state.auditData.history && state.auditData.history.length > 0) {
+      // Replace Audit Ratio Chart with Audit Activity Table
+      if (state.auditData && (state.auditData.auditsDone || state.auditData.auditsReceived)) {
         ratioContainer.innerHTML = ''; // Clear container
         
-        const title = createElement('h3', {
+        const tableTitle = createElement('h3', {
           className: 'chart-title',
-          textContent: 'Audit Ratio History'
+          textContent: 'Audit Activity History'
         });
-        ratioContainer.appendChild(title);
+        ratioContainer.appendChild(tableTitle);
         
-        createAuditRatioChart(state.auditData.history, ratioContainer);
+        // Create the table directly in the ratio chart container
+        const tableResult = createAuditActivityTable(state.auditData, ratioContainer, {
+          maxHeight: '300px' // Match the height of the original chart
+        });
       } else {
-        createFallbackContent(ratioContainer, 'Audit Ratio History', 'No audit history data available to display ratio over time.');
+        createFallbackContent(ratioContainer, 'Audit Activity History', 'No audit activity data available to display.');
       }
       
       // Audit Comparison Chart
