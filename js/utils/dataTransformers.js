@@ -208,13 +208,6 @@ export function transformSkillsData(transactions) {
  * @returns {Object} Processed audit data
  */
 export function transformAuditData(auditData) {
-  // Debug logging to see what we're working with
-  console.log("Transform Audit Data - Input:", {
-    auditData: auditData,
-    auditsDone: auditData?.auditsDone,
-    auditsReceived: auditData?.auditsReceived
-  });
-  
   if (!auditData || (!auditData.auditsDone && !auditData.auditsReceived)) {
     return {
       done: 0,
@@ -235,18 +228,8 @@ export function transformAuditData(auditData) {
   const done = auditsDone.length;
   const received = auditsReceived.length;
   
-  // Log the data being passed to calculateAuditRatio
-  console.log("Data for calculating audit ratio:", {
-    auditsDone: auditsDone,
-    auditsReceived: auditsReceived,
-    doneCount: done,
-    receivedCount: received
-  });
-  
   // Calculate audit ratio and status based on arrays of transactions
   const ratioStats = calculateAuditRatio(auditsDone, auditsReceived);
-  
-  console.log("Calculated ratio stats:", ratioStats);
   
   // Get detailed audit statistics
   const details = analyzeAuditDetails(auditsDone, auditsReceived);
@@ -265,8 +248,6 @@ export function transformAuditData(auditData) {
     details,
     history
   };
-  
-  console.log("Transform Audit Data - Result:", result);
   
   return result;
 }
