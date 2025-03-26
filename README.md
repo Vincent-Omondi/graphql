@@ -2,6 +2,11 @@
 
 This project is a Single Page Application (SPA) that displays a student profile dashboard using GraphQL to fetch data from the school's API. The dashboard shows various statistics and information about a student's progress.
 
+## Demo
+
+- **Live Demo**: [https://vincent-graphql.vercel.app](https://vincent-graphql.vercel.app)
+- **GitHub Repository**: [https://github.com/Vincent-Omondi/graphql](https://github.com/Vincent-Omondi/graphql)
+
 ## Features
 
 - **Authentication**: Secure login with JWT token-based authentication
