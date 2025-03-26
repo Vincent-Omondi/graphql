@@ -5,225 +5,6 @@
 import { createSVGElement, createSVGContainer, createAxes, createScales, createSVGTooltip } from '../utils/svgHelpers.js';
 
 /**
- * Create an audit ratio chart
- * @param {Object} auditData - Processed audit data
- * @param {HTMLElement} container - Container for the chart
- * @param {Object} options - Chart options
- */
-export function createAuditRatioChart(auditData, container, options = {}) {
-  // Clear container
-  container.innerHTML = '';
-  
-  // Set default options
-  const defaults = {
-    width: container.clientWidth || 400,
-    height: 300,
-    padding: 40,
-    doneColor: 'var(--chart-color-1)',
-    receivedColor: 'var(--chart-color-4)',
-    animate: true,
-    animationDuration: 1000
-  };
-  
-  const opts = { ...defaults, ...options };
-  
-  // Create SVG container
-  const { svg, dimensions } = createSVGContainer(opts.width, opts.height, opts.padding);
-  
-  // Check if SVG is valid before continuing
-  if (!svg || typeof svg.appendChild !== 'function') {
-    const errorMessage = document.createElement('div');
-    errorMessage.className = 'chart-error';
-    errorMessage.textContent = 'Error: Failed to create SVG chart';
-    container.appendChild(errorMessage);
-    return;
-  }
-  
-  container.appendChild(svg);
-  
-  // Add title
-  const title = createSVGElement('text', {
-    x: dimensions.width / 2,
-    y: 20,
-    'text-anchor': 'middle',
-    'font-size': '16px',
-    'font-weight': 'bold',
-    fill: 'var(--text-color)',
-    class: 'chart-title'
-  });
-  title.textContent = 'Audit Ratio History';
-  svg.appendChild(title);
-  
-  // Ensure auditData is properly structured
-  const data = Array.isArray(auditData) 
-    ? auditData 
-    : (auditData && Array.isArray(auditData.history)) 
-      ? auditData.history 
-      : [];
-      
-  // If no data, show message
-  if (data.length === 0) {
-    const noDataText = createSVGElement('text', {
-      x: dimensions.width / 2,
-      y: dimensions.height / 2,
-      'text-anchor': 'middle',
-      'font-size': '14px',
-      fill: 'var(--text-color)',
-      opacity: 0.7
-    });
-    noDataText.textContent = 'No audit data available';
-    svg.appendChild(noDataText);
-    return;
-  }
-  
-  // Create scales
-  const scales = createScales(
-    data, 
-    dimensions, 
-    {
-      xAccessor: d => d.date,
-      yAccessor: d => d.ratio,
-      yDomain: [0, Math.max(2, Math.ceil(Math.max(...data.map(d => d.ratio))))]
-    }
-  );
-  
-  // Create axes
-  createAxes(
-    svg, 
-    dimensions, 
-    {
-      xScale: scales.xScale,
-      yScale: scales.yScale,
-      xAxisLabel: 'Date',
-      yAxisLabel: 'Ratio',
-      xTickFormat: date => {
-        return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-      },
-      yTickFormat: value => value.toFixed(1)
-    }
-  );
-  
-  // Create tooltip
-  const tooltip = createSVGTooltip(svg);
-  
-  // Add ratio reference line at 1.0
-  const referenceLine = createSVGElement('line', {
-    x1: dimensions.padding,
-    y1: scales.yScale(1),
-    x2: dimensions.width - dimensions.padding,
-    y2: scales.yScale(1),
-    stroke: 'var(--text-color)',
-    'stroke-width': 1,
-    'stroke-dasharray': '5,5',
-    opacity: 0.5
-  });
-  svg.appendChild(referenceLine);
-  
-  // Add reference text
-  const referenceText = createSVGElement('text', {
-    x: dimensions.width - dimensions.padding + 5,
-    y: scales.yScale(1) - 5,
-    'font-size': '12px',
-    fill: 'var(--text-color)',
-    opacity: 0.7
-  });
-  referenceText.textContent = 'Target';
-  svg.appendChild(referenceText);
-  
-  // Create line for ratio
-  const linePath = createSVGElement('path', {
-    fill: 'none',
-    stroke: opts.doneColor,
-    'stroke-width': 2,
-    'stroke-linejoin': 'round',
-    'stroke-linecap': 'round'
-  });
-  
-  // Generate path data
-  let pathData = '';
-  data.forEach((d, i) => {
-    const x = scales.xScale(d.date);
-    const y = scales.yScale(d.ratio);
-    pathData += (i === 0 ? 'M' : 'L') + x + ',' + y;
-  });
-  
-  linePath.setAttribute('d', pathData);
-  svg.appendChild(linePath);
-  
-  // Add animation if enabled
-  if (opts.animate) {
-    const pathLength = linePath.getTotalLength();
-    linePath.style.strokeDasharray = pathLength;
-    linePath.style.strokeDashoffset = pathLength;
-    linePath.style.transition = `stroke-dashoffset ${opts.animationDuration}ms ease`;
-    
-    // Trigger animation
-    setTimeout(() => {
-      linePath.style.strokeDashoffset = 0;
-    }, 10);
-  }
-  
-  // Add data points with tooltips
-  data.forEach(d => {
-    const x = scales.xScale(d.date);
-    const y = scales.yScale(d.ratio);
-    
-    const circle = createSVGElement('circle', {
-      cx: x,
-      cy: y,
-      r: 5,
-      fill: opts.doneColor,
-      stroke: 'var(--primary)',
-      'stroke-width': 1,
-      cursor: 'pointer'
-    });
-    
-    // Add tooltip events
-    circle.addEventListener('mouseenter', () => {
-      circle.setAttribute('r', 7);
-      
-      const date = d.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      tooltip.show(x, y, `${date}\nDone: ${d.done}\nReceived: ${d.received}\nRatio: ${d.ratio.toFixed(2)}`);
-    });
-    
-    circle.addEventListener('mouseleave', () => {
-      circle.setAttribute('r', 5);
-      tooltip.hide();
-    });
-    
-    svg.appendChild(circle);
-  });
-  
-  // Add legend
-  const legend = createSVGElement('g', {
-    transform: `translate(${dimensions.padding}, ${dimensions.height - 10})`
-  });
-  
-  const legendItem = createSVGElement('g', {});
-  
-  const legendColor = createSVGElement('rect', {
-    x: 0,
-    y: -10,
-    width: 12,
-    height: 12,
-    fill: opts.doneColor
-  });
-  
-  const legendText = createSVGElement('text', {
-    x: 20,
-    y: 0,
-    'font-size': '12px',
-    fill: 'var(--text-color)'
-  });
-  legendText.textContent = 'Audit Ratio';
-  
-  legendItem.appendChild(legendColor);
-  legendItem.appendChild(legendText);
-  legend.appendChild(legendItem);
-  svg.appendChild(legend);
-}
-
-/**
  * Create an audit comparison bar chart
  * @param {Object} auditData - Processed audit data
  * @param {HTMLElement} container - Container for the chart
@@ -596,7 +377,166 @@ export function createAuditComparisonChart(auditData, container, options = {}) {
   svg.appendChild(legend);
 }
 
+/**
+ * Creates an audit activity table
+ * @param {Object} auditData - Processed audit data 
+ * @param {HTMLElement} container - Container for the table
+ * @param {Object} options - Table options
+ */
+export function createAuditActivityTable(auditData = {}, container, options = {}) {
+  // Default options
+  const opts = {
+    maxHeight: '400px',
+    doneColor: 'var(--chart-color-1)',
+    receivedColor: 'var(--chart-color-4)',
+    dateFormat: { year: 'numeric', month: 'short', day: 'numeric' },
+    showSummary: false,
+    ...options
+  };
+  
+  // Clear container
+  container.innerHTML = '';
+  
+  // Create table container
+  const tableContainer = document.createElement('div');
+  tableContainer.className = 'audit-table-container';
+  container.appendChild(tableContainer);
+  
+  // Add title
+  const title = document.createElement('h3');
+  title.className = 'chart-title';
+  title.textContent = 'Audit Activity History';
+  tableContainer.appendChild(title);
+  
+  // Create table wrapper for scrollability
+  const tableWrapper = document.createElement('div');
+  tableWrapper.className = 'audit-table-wrapper';
+  tableWrapper.style.maxHeight = opts.maxHeight;
+  
+  // Create table
+  const table = document.createElement('table');
+  table.className = 'audit-activity-table';
+  
+  // Create table header
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  
+  // Removed Path column, updated Amount header to show kB
+  const headers = ['Date', 'Type', 'Project', 'Amount (kB)'];
+  
+  headers.forEach(headerText => {
+    const th = document.createElement('th');
+    th.textContent = headerText;
+    headerRow.appendChild(th);
+  });
+  
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+  
+  // Create table body
+  const tbody = document.createElement('tbody');
+  
+  // Get audit data
+  const auditsDone = Array.isArray(auditData.auditsDone) ? auditData.auditsDone : [];
+  const auditsReceived = Array.isArray(auditData.auditsReceived) ? auditData.auditsReceived : [];
+  
+  // Group received audits by project
+  const receivedByProject = {};
+  auditsReceived.forEach(audit => {
+    const projectName = audit.object?.name || 'Unknown';
+    if (!receivedByProject[projectName]) {
+      receivedByProject[projectName] = {
+        ...audit,
+        amount: 0,
+        count: 0
+      };
+    }
+    receivedByProject[projectName].amount += audit.amount;
+    receivedByProject[projectName].count += 1;
+  });
+  
+  // Convert to array
+  const aggregatedReceivedAudits = Object.values(receivedByProject).map(audit => ({
+    ...audit,
+    auditType: 'received'
+  }));
+  
+  // Combine audits done and aggregated received
+  const allAudits = [
+    ...auditsDone.map(audit => ({ ...audit, auditType: 'done' })),
+    ...aggregatedReceivedAudits
+  ];
+  
+  // Sort by date (newest first)
+  allAudits.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  
+  if (allAudits.length === 0) {
+    // Show no data message
+    const noDataRow = document.createElement('tr');
+    const noDataCell = document.createElement('td');
+    noDataCell.setAttribute('colspan', headers.length);
+    noDataCell.textContent = 'No audit activity data to display';
+    noDataCell.style.textAlign = 'center';
+    noDataCell.style.padding = '2rem';
+    noDataRow.appendChild(noDataCell);
+    tbody.appendChild(noDataRow);
+  } else {
+    // Create rows for each audit
+    allAudits.forEach(audit => {
+      const row = document.createElement('tr');
+      
+      // Date cell - no time
+      const dateCell = document.createElement('td');
+      const date = new Date(audit.createdAt);
+      dateCell.textContent = date.toLocaleDateString('en-US', opts.dateFormat);
+      row.appendChild(dateCell);
+      
+      // Type cell
+      const typeCell = document.createElement('td');
+      const isAuditDone = audit.auditType === 'done';
+      typeCell.textContent = isAuditDone ? 'Done' : 'Received';
+      typeCell.style.color = isAuditDone ? opts.doneColor : opts.receivedColor;
+      typeCell.style.fontWeight = 'bold';
+      row.appendChild(typeCell);
+      
+      // Project cell - for received audits, show count
+      const projectCell = document.createElement('td');
+      const projectName = audit.object?.name || 'Unknown';
+      
+      if (!isAuditDone && audit.count > 1) {
+        projectCell.textContent = `${projectName} (${audit.count})`;
+      } else {
+        projectCell.textContent = projectName;
+      }
+      
+      row.appendChild(projectCell);
+      
+      // Amount cell - convert to kB (divide by 1000) and format with 2 decimal places
+      const amountCell = document.createElement('td');
+      const amountInKB = audit.amount / 1000;
+      const formattedAmount = amountInKB.toFixed(2);
+      amountCell.textContent = formattedAmount;
+      amountCell.style.textAlign = 'right';
+      row.appendChild(amountCell);
+      
+      tbody.appendChild(row);
+    });
+  }
+  
+  table.appendChild(tbody);
+  tableWrapper.appendChild(table);
+  tableContainer.appendChild(tableWrapper);
+  
+  // Return info about the table
+  return {
+    table,
+    count: allAudits.length,
+    doneCount: auditsDone.length,
+    receivedCount: auditsReceived.length
+  };
+}
+
 export default {
-  createAuditRatioChart,
-  createAuditComparisonChart
+  createAuditComparisonChart,
+  createAuditActivityTable
 }; 
