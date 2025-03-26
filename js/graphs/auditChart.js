@@ -321,7 +321,7 @@ export function createAuditComparisonChart(auditData, container, options = {}) {
   
   // Add legend
   const legend = createSVGElement('g', {
-    transform: `translate(${dimensions.width - dimensions.padding - 150}, ${dimensions.padding})`
+    transform: `translate(${dimensions.width/2 - 70}, ${dimensions.padding})`
   });
   
   // "Done" legend item
@@ -332,15 +332,16 @@ export function createAuditComparisonChart(auditData, container, options = {}) {
   const doneLegendColor = createSVGElement('rect', {
     x: 0,
     y: -10,
-    width: 12,
-    height: 12,
+    width: 14,
+    height: 14,
+    rx: 2,
     fill: opts.doneColor
   });
   
   const doneLegendText = createSVGElement('text', {
-    x: 20,
-    y: 0,
-    'font-size': '12px',
+    x: 24,
+    y: 2,
+    'font-size': '14px',
     fill: 'var(--text-color)'
   });
   doneLegendText.textContent = 'Done';
@@ -351,21 +352,22 @@ export function createAuditComparisonChart(auditData, container, options = {}) {
   
   // "Received" legend item
   const receivedLegendItem = createSVGElement('g', {
-    transform: 'translate(0, 20)'
+    transform: 'translate(100, 0)'
   });
   
   const receivedLegendColor = createSVGElement('rect', {
     x: 0,
     y: -10,
-    width: 12,
-    height: 12,
+    width: 14,
+    height: 14,
+    rx: 2,
     fill: opts.receivedColor
   });
   
   const receivedLegendText = createSVGElement('text', {
-    x: 20,
-    y: 0,
-    'font-size': '12px',
+    x: 24,
+    y: 2,
+    'font-size': '14px',
     fill: 'var(--text-color)'
   });
   receivedLegendText.textContent = 'Received';
