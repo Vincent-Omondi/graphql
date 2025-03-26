@@ -547,8 +547,6 @@ function renderProfile(container) {
   
   // Render charts after DOM is updated
   setTimeout(() => {
-    console.log('Rendering charts with data state:', state);
-    
     // Basic fallback for any chart container
     const createFallbackContent = (container, title, message) => {
       container.innerHTML = '';
@@ -570,12 +568,6 @@ function renderProfile(container) {
       // XP charts
       const xpLineContainer = document.querySelector('#xp-line-chart');
       const xpBarContainer = document.querySelector('#xp-bar-chart');
-      
-      // Debug data
-      console.log('XP Data for charts:', {
-        byDate: state.xpData?.byDate || [],
-        byProject: state.xpData?.byProject || []
-      });
       
       // XP Line Chart
       if (state.xpData?.byDate && state.xpData.byDate.length > 1) {
@@ -610,12 +602,6 @@ function renderProfile(container) {
       // Projects tab
       const donutContainer = document.querySelector('#projects-donut-chart');
       const radarContainer = document.querySelector('#skills-radar-chart');
-      
-      // Debug data
-      console.log('Project Data for charts:', {
-        results: state.projectResults || {},
-        skills: state.skillsData || []
-      });
       
       // Project Donut Chart
       if (state.projectResults && state.projectResults.total > 0) {
@@ -669,10 +655,8 @@ function renderProfile(container) {
         // Calculate percentages based on maximum possible value
         const maxPossibleValue = Math.max(...topSkills.map(s => s.amount));
         topSkills.forEach(skill => {
-          skill.percentage = (skill.amount );
+          skill.percentage = (skill.amount);
         });
-        
-        console.log('Top 6 skills with max values:', topSkills);
         
         createSkillsRadarChart(topSkills, radarContainer);
       } else {
@@ -682,9 +666,6 @@ function renderProfile(container) {
       // Audits tab
       const ratioContainer = document.querySelector('#audit-ratio-chart');
       const comparisonContainer = document.querySelector('#audit-comparison-chart');
-      
-      // Debug data
-      console.log('Audit Data for charts:', state.auditData || {});
       
       // Audit Ratio Chart
       if (state.auditData && state.auditData.history && state.auditData.history.length > 0) {
