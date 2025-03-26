@@ -186,7 +186,7 @@ export function getAuthHeaders() {
 export function renderLoginComponent(container) {
   const loginHTML = `
     <div class="login-container glow-container">
-      <a href="/" class="back-to-home hover-scale">
+      <a href="#/" class="back-to-home hover-scale">
         <i class="fas fa-arrow-left"></i> Back
       </a>
       
