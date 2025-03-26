@@ -216,7 +216,9 @@ export function transformAuditData(auditData) {
       receivedAmount: 0,
       ratio: 1,
       upToDate: true,
-      history: []
+      history: [],
+      auditsDone: [],
+      auditsReceived: []
     };
   }
   
@@ -246,7 +248,9 @@ export function transformAuditData(auditData) {
     upToDate: ratioStats.upToDate,
     needsAudits: ratioStats.needsAudits,
     details,
-    history
+    history,
+    auditsDone,
+    auditsReceived
   };
   
   return result;
