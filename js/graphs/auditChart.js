@@ -30,20 +30,8 @@ export function createAuditRatioChart(auditData, container, options = {}) {
   // Create SVG container
   const { svg, dimensions } = createSVGContainer(opts.width, opts.height, opts.padding);
   
-  // Add debug logging to identify the issue
-  console.log('SVG container created:', {
-    svg: svg,
-    dimensions: dimensions,
-    container: container,
-    auditData: auditData,
-    history: auditData?.history
-  });
-  
-  // Check if svg is a valid DOM element before appending
+  // Check if SVG is valid before continuing
   if (!svg || typeof svg.appendChild !== 'function') {
-    console.error('Invalid SVG element:', svg);
-    
-    // Create fallback content instead of trying to use the invalid SVG
     const errorMessage = document.createElement('div');
     errorMessage.className = 'chart-error';
     errorMessage.textContent = 'Error: Failed to create SVG chart';
@@ -66,8 +54,15 @@ export function createAuditRatioChart(auditData, container, options = {}) {
   title.textContent = 'Audit Ratio History';
   svg.appendChild(title);
   
+  // Ensure auditData is properly structured
+  const data = Array.isArray(auditData) 
+    ? auditData 
+    : (auditData && Array.isArray(auditData.history)) 
+      ? auditData.history 
+      : [];
+      
   // If no data, show message
-  if (!auditData || !auditData.history || auditData.history.length === 0) {
+  if (data.length === 0) {
     const noDataText = createSVGElement('text', {
       x: dimensions.width / 2,
       y: dimensions.height / 2,
@@ -81,23 +76,14 @@ export function createAuditRatioChart(auditData, container, options = {}) {
     return;
   }
   
-  // Prepare data
-  const data = auditData.history.map(item => ({
-    date: item.date,
-    done: item.done,
-    received: item.received,
-    ratio: item.ratio
-  }));
-  
   // Create scales
   const scales = createScales(
     data, 
     dimensions, 
     {
-      xKey: 'date',
-      yKey: 'ratio',
-      yMin: 0,
-      yMax: Math.max(2, Math.ceil(Math.max(...data.map(d => d.ratio))))
+      xAccessor: d => d.date,
+      yAccessor: d => d.ratio,
+      yDomain: [0, Math.max(2, Math.ceil(Math.max(...data.map(d => d.ratio))))]
     }
   );
   
@@ -106,8 +92,8 @@ export function createAuditRatioChart(auditData, container, options = {}) {
     svg, 
     dimensions, 
     {
-      xScale: scales.x,
-      yScale: scales.y,
+      xScale: scales.xScale,
+      yScale: scales.yScale,
       xAxisLabel: 'Date',
       yAxisLabel: 'Ratio',
       xTickFormat: date => {
@@ -123,9 +109,9 @@ export function createAuditRatioChart(auditData, container, options = {}) {
   // Add ratio reference line at 1.0
   const referenceLine = createSVGElement('line', {
     x1: dimensions.padding,
-    y1: scales.y(1),
+    y1: scales.yScale(1),
     x2: dimensions.width - dimensions.padding,
-    y2: scales.y(1),
+    y2: scales.yScale(1),
     stroke: 'var(--text-color)',
     'stroke-width': 1,
     'stroke-dasharray': '5,5',
@@ -136,7 +122,7 @@ export function createAuditRatioChart(auditData, container, options = {}) {
   // Add reference text
   const referenceText = createSVGElement('text', {
     x: dimensions.width - dimensions.padding + 5,
-    y: scales.y(1) - 5,
+    y: scales.yScale(1) - 5,
     'font-size': '12px',
     fill: 'var(--text-color)',
     opacity: 0.7
@@ -156,8 +142,8 @@ export function createAuditRatioChart(auditData, container, options = {}) {
   // Generate path data
   let pathData = '';
   data.forEach((d, i) => {
-    const x = scales.x(d.date);
-    const y = scales.y(d.ratio);
+    const x = scales.xScale(d.date);
+    const y = scales.yScale(d.ratio);
     pathData += (i === 0 ? 'M' : 'L') + x + ',' + y;
   });
   
@@ -179,8 +165,8 @@ export function createAuditRatioChart(auditData, container, options = {}) {
   
   // Add data points with tooltips
   data.forEach(d => {
-    const x = scales.x(d.date);
-    const y = scales.y(d.ratio);
+    const x = scales.xScale(d.date);
+    const y = scales.yScale(d.ratio);
     
     const circle = createSVGElement('circle', {
       cx: x,
@@ -197,14 +183,7 @@ export function createAuditRatioChart(auditData, container, options = {}) {
       circle.setAttribute('r', 7);
       
       const date = d.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      tooltip.show(`
-        <div>
-          <strong>${date}</strong><br>
-          Done: ${d.done}<br>
-          Received: ${d.received}<br>
-          Ratio: ${d.ratio.toFixed(2)}
-        </div>
-      `, x, y);
+      tooltip.show(x, y, `${date}\nDone: ${d.done}\nReceived: ${d.received}\nRatio: ${d.ratio.toFixed(2)}`);
     });
     
     circle.addEventListener('mouseleave', () => {
@@ -285,8 +264,15 @@ export function createAuditComparisonChart(auditData, container, options = {}) {
   title.textContent = 'Audits Done vs. Received';
   svg.appendChild(title);
   
+  // Get the history data from auditData
+  const historyData = Array.isArray(auditData) 
+    ? auditData 
+    : (auditData && Array.isArray(auditData.history)) 
+      ? auditData.history 
+      : [];
+      
   // If no data, show message
-  if (!auditData || !auditData.history || auditData.history.length === 0) {
+  if (historyData.length === 0) {
     const noDataText = createSVGElement('text', {
       x: dimensions.width / 2,
       y: dimensions.height / 2,
@@ -301,7 +287,7 @@ export function createAuditComparisonChart(auditData, container, options = {}) {
   }
   
   // Get the last few months (up to 5)
-  const recentData = auditData.history
+  const recentData = historyData
     .sort((a, b) => b.date - a.date)
     .slice(0, 5)
     .reverse();
@@ -495,12 +481,7 @@ export function createAuditComparisonChart(auditData, container, options = {}) {
       doneBar.setAttribute('opacity', 0.8);
       
       const date = d.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      tooltip.show(`
-        <div>
-          <strong>${date}</strong><br>
-          Audits Done: ${d.done}
-        </div>
-      `, x + barWidth / 2, y);
+      tooltip.show(x + barWidth / 2, y, `${date}\nAudits Done: ${d.done}`);
     });
     
     doneBar.addEventListener('mouseleave', () => {
@@ -544,12 +525,7 @@ export function createAuditComparisonChart(auditData, container, options = {}) {
       receivedBar.setAttribute('opacity', 0.8);
       
       const date = d.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      tooltip.show(`
-        <div>
-          <strong>${date}</strong><br>
-          Audits Received: ${d.received}
-        </div>
-      `, receivedX + barWidth / 2, receivedY);
+      tooltip.show(receivedX + barWidth / 2, receivedY, `${date}\nAudits Received: ${d.received}`);
     });
     
     receivedBar.addEventListener('mouseleave', () => {
