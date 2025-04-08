@@ -230,8 +230,12 @@ export function transformAuditData(auditData) {
   const done = auditsDone.length;
   const received = auditsReceived.length;
   
-  // Calculate audit ratio and status based on arrays of transactions
-  const ratioStats = calculateAuditRatio(auditsDone, auditsReceived);
+  // Calculate total amounts
+  const doneAmount = auditsDone.reduce((sum, audit) => sum + (audit.amount || 0), 0);
+  const receivedAmount = auditsReceived.reduce((sum, audit) => sum + (audit.amount || 0), 0);
+  
+  // Get audit ratio from user data
+  const ratio = auditData.user?.auditRatio || 1;
   
   // Get detailed audit statistics
   const details = analyzeAuditDetails(auditsDone, auditsReceived);
@@ -242,11 +246,11 @@ export function transformAuditData(auditData) {
   const result = {
     done,
     received,
-    doneAmount: ratioStats.doneAmount || 0,
-    receivedAmount: ratioStats.receivedAmount || 0,
-    ratio: ratioStats.ratio,
-    upToDate: ratioStats.upToDate,
-    needsAudits: ratioStats.needsAudits,
+    doneAmount,
+    receivedAmount,
+    ratio,
+    upToDate: ratio >= 1.0,
+    needsAudits: ratio < 0.8,
     details,
     history,
     auditsDone,
