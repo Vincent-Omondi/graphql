@@ -4,41 +4,16 @@
  */
 
 /**
- * Calculate audit ratio and status based on transaction amounts
- * @param {Array} auditsDone - "up" transactions completed by the user
- * @param {Array} auditsReceived - "down" transactions received by the user
- * @returns {Object} Ratio and status information
+ * Calculate audit status based on ratio
+ * @param {number} ratio - Audit ratio from user data
+ * @returns {Object} Status information
  */
-export function calculateAuditRatio(auditsDone, auditsReceived) {
-  // Ensure we're working with arrays
-  const doneArray = Array.isArray(auditsDone) ? auditsDone : [];
-  const receivedArray = Array.isArray(auditsReceived) ? auditsReceived : [];
-  
-  // Calculate total amounts
-  const doneAmount = doneArray.reduce((sum, audit) => sum + (audit.amount || 0), 0);
-  const receivedAmount = receivedArray.reduce((sum, audit) => sum + (audit.amount || 0), 0);
-  
-  // Prevent division by zero
-  if (receivedAmount === 0) {
-    return {
-      ratio: doneAmount > 0 ? doneAmount / 1000 : 1, // Normalize large numbers
-      isBalanced: true,
-      needsAudits: false,
-      upToDate: true,
-      doneAmount,
-      receivedAmount
-    };
-  }
-
-  const ratio = doneAmount / receivedAmount;
-  
+export function calculateAuditRatio(ratio) {
   return {
     ratio,
     isBalanced: ratio >= 1.0,
     needsAudits: ratio < 0.8,
-    upToDate: ratio >= 1.0,
-    doneAmount,
-    receivedAmount
+    upToDate: ratio >= 1.0
   };
 }
 
