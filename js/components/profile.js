@@ -387,7 +387,7 @@ function renderProfile(container) {
       }),
       createElement('p', {
         className: 'gradient-text',
-        textContent: `${state.projectResults?.passed || 0}/${state.projectResults?.total || 0}`
+        textContent: `${state.projectResults?.total || 0}`
       })
     ]),
     createElement('div', {
