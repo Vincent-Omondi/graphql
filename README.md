@@ -46,7 +46,6 @@ This project is a Single Page Application (SPA) that displays a student profile 
 │   │   └── dataTransformers.js # Data processing utilities
 │   └── app.js             # Main application file
 ├── index.html             # Main HTML file
-├── profile-test.html      # Test page for profile component
 └── README.md              # Project documentation
 ```
 
@@ -54,17 +53,8 @@ This project is a Single Page Application (SPA) that displays a student profile 
 
 1. Clone the repository
 2. Serve the files with a local server (e.g., Live Server extension in VS Code)
-3. Navigate to `index.html` in your browser
+3. Navigate to `localhost:5500/` or `index.html` in your browser
 4. Log in with your credentials
-
-## Testing
-
-A test page (`profile-test.html`) is provided for testing the profile component without authentication:
-
-1. Open `profile-test.html` in your browser
-2. Click "Set Mock Auth" to set a mock JWT token
-3. Click "Render Profile" to test the profile component
-4. Use "Clear Storage" to remove the mock token
 
 ## GraphQL API
 
